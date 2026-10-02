@@ -41,7 +41,7 @@ const semanticCache=new Map();
 const correction=document.createElement('p');correction.className='search-correction';correction.hidden=true;correction.setAttribute('role','status');correction.setAttribute('aria-live','polite');document.querySelector('#search-form').after(correction);
 const expandedCategories=new Set(),expandedNotes=new Set(),expandedRecordings=new Set();
 const worker=new Worker(new URL("./worker.js",import.meta.url),{type:"module"});
-worker.postMessage({type:'init', dataBase:course.dataBase});
+worker.postMessage({type:'init', dataBase:course.dataBase,queryShorthand:course.queryShorthand||{}});
 worker.onmessage=({data})=>{
  if(data.type==="ready"){semanticReady=true;if(!timer)run();}
  if(data.type==="results"){
@@ -197,7 +197,7 @@ input.addEventListener('input',()=>{
 document.querySelector('#search-form').addEventListener('submit',e=>{e.preventDefault();clearTimeout(timer);run();});
 document.addEventListener('keydown',e=>{if(e.key==='/'&&e.target!==input){e.preventDefault();input.focus();}});
 try{
- const response=await fetch(new URL('index.json',course.dataBase));if(!response.ok)throw new Error();const data=await response.json();processQuery=createQueryProcessor(data.records, {shorthand:course.queryShorthand || {}});
+ const response=await fetch(new URL('index.json',course.dataBase),{cache:'no-cache'});if(!response.ok)throw new Error();const data=await response.json();processQuery=createQueryProcessor(data.records, {shorthand:course.queryShorthand || {}});
  document.querySelector('#index-coverage').textContent=indexedCoverage(data.records,course);
  if(!timer)run();
 }catch{document.querySelector('#results').hidden=false;document.querySelector('#summary').textContent='Search is unavailable. Refresh to try again.';}

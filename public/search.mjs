@@ -16,36 +16,42 @@ export function combineLectureResults(documents){
  return [...lectures.values()].map(lecture=>({...lecture,url:(lecture.recording||lecture.pdf).url,locations:[...(lecture.recording?.locations||[]),...(lecture.pdf?.locations||[])]})).concat(other);
 }
 export function buildSearch(records){
-  const processQuery=createQueryProcessor(records);
-  const prepared=records.map(r=>({...r,words:tokens(`${r.section} ${r.text} ${(r.concepts||[]).join(' ')}`),heading:tokens(`${r.title} ${r.section}`)}));
-  const postings=new Map();
-  prepared.forEach((r,i)=>{for(const word of new Set(r.words)){if(!postings.has(word))postings.set(word,new Set());postings.get(word).add(i);}});
-  return (query,options)=>{
-    const normalized=processQuery(query,options).normalized;
-    const terms=[...new Set(tokens(normalized))];if(!terms.length)return [];
-    const matches=terms.map(term=>{
-      const hits=new Set();for(const [word,ids] of postings)if(word===term||(term.length>=3&&word.startsWith(term)))for(const id of ids)hits.add(id);
-      return hits;
-    });
-    const ids=new Set(matches.flatMap(hit=>[...hit]));
-    const ranked=[...ids].map(id=>{
-      const r=prepared[id];
-      const matched=matches.filter(hit=>hit.has(id)).length;
-      const exact=matched===terms.length;
-      // Allow a substantial partial match for longer questions, while keeping
-      // short topics precise and avoiding one-word hits for unrelated queries.
-      if(!exact&&(terms.length<3||matched<Math.ceil(terms.length*.7)))return null;
-      const score=terms.reduce((sum,term,index)=>{
-        if(!matches[index].has(id))return sum;
-        const rarity=Math.log(1+(prepared.length-matches[index].size+.5)/(matches[index].size+.5));
-        const frequency=r.words.filter(word=>word===term||(term.length>=3&&word.startsWith(term))).length;
-        const heading=r.heading.some(word=>word===term||(term.length>=3&&word.startsWith(term)));
-        return sum+rarity*(frequency/(frequency+1.2)+Number(heading)*2);
-      },0)+Number(exact)*4+Number(normalizeText(`${r.section} ${r.text}`).includes(normalized))*2;
-      return {...r,score,exact,keyword:true};
-    }).filter(Boolean).sort((a,b)=>b.score-a.score||Number(a.id)-Number(b.id));
-    return groupDocuments(ranked);
-  };
+ const processQuery=createQueryProcessor(records);
+ const prepared=records.map(r=>{
+  const words=tokens(`${r.section} ${r.text} ${(r.concepts||[]).join(' ')}`),heading=tokens(`${r.title} ${r.section}`);
+  const frequencies=new Map();for(const word of words)frequencies.set(word,(frequencies.get(word)||0)+1);
+  return {...r,words,heading,frequencies};
+ });
+ const averageLength=prepared.reduce((sum,r)=>sum+r.words.length,0)/Math.max(1,prepared.length)||1;
+ const postings=new Map();
+ prepared.forEach((r,i)=>{for(const word of r.frequencies.keys()){if(!postings.has(word))postings.set(word,new Set());postings.get(word).add(i);}});
+ return (query,options={})=>{
+  const normalized=processQuery(query,options).normalized;
+  const terms=[...new Set(tokens(normalized))];if(!terms.length)return [];
+  const matches=terms.map(term=>{
+   const hits=new Set();for(const [word,ids] of postings)if(word===term||(term.length>=3&&word.startsWith(term)))for(const id of ids)hits.add(id);
+   return hits;
+  });
+  const ids=new Set(matches.flatMap(hit=>[...hit]));
+  const ranked=[...ids].map(id=>{
+   const r=prepared[id];if(options.filter&&!options.filter(r))return null;
+   const matched=matches.filter(hit=>hit.has(id)).length,exact=matched===terms.length;
+   // Require strong content overlap; a broad assignment title alone is insufficient.
+   if(!exact&&(terms.length<3||matched<Math.ceil(terms.length*.7)))return null;
+   const score=terms.reduce((sum,term,index)=>{
+    if(!matches[index].has(id))return sum;
+    const rarity=Math.log(1+(prepared.length-matches[index].size+.5)/(matches[index].size+.5));
+    let frequency=0;for(const [word,count] of r.frequencies)if(word===term||(term.length>=3&&word.startsWith(term)))frequency+=count;
+    const heading=r.heading.some(word=>word===term||(term.length>=3&&word.startsWith(term)));
+    // BM25 term saturation and length normalization, with a heading boost.
+    const k=1.2*(.25+.75*r.words.length/averageLength);
+    return sum+rarity*(frequency*2.2/(frequency+k)+Number(heading)*2);
+   },0)+Number(exact)*4+Number(normalizeText(`${r.section} ${r.text}`).includes(normalized))*2;
+   const {frequencies,words,heading,...record}=r;
+   return {...record,score,exact,keyword:true};
+  }).filter(Boolean).sort((a,b)=>b.score-a.score||Number(a.id)-Number(b.id));
+  return groupDocuments(ranked);
+ };
 }
 export function excerpt(text,query){
   const terms=tokens(query);const words=[...text.matchAll(/[a-z0-9]+/gi)];

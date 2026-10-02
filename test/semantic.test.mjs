@@ -5,6 +5,8 @@ import {resolve} from 'node:path';
 import {pipeline,env} from '@huggingface/transformers';
 import {createQueryProcessor} from '../public/search.mjs';
 import {semanticSearch} from '../public/semantic.mjs';
+import {createHybridSearch} from '../public/hybrid.mjs';
+import {parseResourceQuery} from '../public/resource-query.mjs';
 let embed;
 before(async()=>{
  env.allowRemoteModels=false;env.localModelPath=resolve('public/models')+'/';
@@ -17,7 +19,8 @@ async function corpus(path,shorthand={}){
  assert.equal(vectors.length,data.records.length*384);
  assert(data.records.every(r=>new Date(r.releaseAt)<=new Date(data.metadata.builtAt)));
  const process=createQueryProcessor(data.records,{shorthand});
- return {data,search:async q=>{q=process(q).normalized;const e=await embed(q,{pooling:'mean',normalize:true});return semanticSearch(data.records,vectors,q,e.data);}};
+ const hybrid=createHybridSearch(data.records,vectors);
+ return {data,search:async q=>{const request=parseResourceQuery(process(q).normalized,{shorthand});const e=request.query?await embed(request.query,{pooling:'mean',normalize:true}):null;return hybrid(request,e?.data);}};
 }
 test('the local model retrieves a passage by meaning',async()=>{
  const records=[{id:'fixture',category:'Notes',title:'Projections',section:'Geometry',text:'The perpendicular projection is the point on a line with minimum distance to the original vector.',concepts:['projection'],url:'https://math124.org/fixture/'}];
@@ -62,4 +65,20 @@ test('EECS 245 real sources retain loss aliases and lecture moments',{skip:!proc
  for(const q of ['absolute','MAE','absolte loss'])assert.deepEqual(await search(q),found);
  assert((await search('closest vector on a line')).some(r=>r.url.includes('/projecting-onto-a-single-vector/')));
  assert.equal((await search('purple flying giraffes')).length,0);
+});
+
+
+test('Math 124 hybrid queries target homework problems, lecture moments, notes, labs, and the practice exam',{skip:!process.env.MATH124_DATA},async()=>{
+ const {search}=await corpus(process.env.MATH124_DATA);
+ for(const q of ['HW 4 problem 3','HW4P3']){
+  const found=await search(q);assert.equal(found.length,1);
+  assert(found.every(r=>r.category==='Homeworks'&&r.title.startsWith('Homework 4:')&&r.locations.every(l=>/^Problem 3\b/.test(l.section))),q);
+ }
+ const lecture=await search('lecture 9 projection');assert(lecture.length);assert(lecture.every(r=>/^Lecture 9\b/.test(r.title)));
+ const notes=await search('note 2.7 closest vector on a line');assert(notes.length);assert(notes.every(r=>r.category==='Notes'&&r.url.includes('/02-07/')));
+ const lab=await search('lab 4 activity 2');assert(lab.length);assert(lab.every(r=>r.category==='Labs'&&r.locations.every(l=>/^Activity 2\b/.test(l.section))));
+ for(const q of ['practice midterm 1 problem 3','Fall 2026 practice midterm 1 problem 3']){
+  const exam=await search(q);assert.equal(exam.length,1,q);assert.equal(exam[0].title,'Practice Midterm 1');assert(exam[0].locations.every(l=>/^Problem 3\b/.test(l.section)));
+ }
+ assert.equal((await search('HW 99 projection')).length,0);
 });
