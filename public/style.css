@@ -50,3 +50,4 @@ body{font-family:var(--course-font);color:#5c5962;background:#fff;line-height:1.
 
 .search-explanation code{font-size:1em}
 .search-explanation .katex{font-size:1em}
+#search-form kbd{display:grid;place-items:center;flex-shrink:0;width:22px;height:24px;padding:0;line-height:1}#search-form kbd svg{display:block;width:12px;height:16px;stroke:currentColor;stroke-width:1.5;fill:none}
