@@ -27,8 +27,10 @@ test('the local model retrieves a passage by meaning',async()=>{
 });
 test('Math 124 real sources preserve coverage, links, timestamps, and topic matches',{skip:!process.env.MATH124_DATA},async()=>{
  const {data,search}=await corpus(process.env.MATH124_DATA);
- assert.deepEqual(data.metadata.coverage,{lectures:10,notes:14,homeworks:4,labs:5});
- assert.equal(data.metadata.recordings.available,10);
+ // Keep the initial corpus as a floor while allowing later public releases.
+ for(const [kind,minimum] of Object.entries({lectures:10,notes:14,homeworks:4,labs:5}))assert(data.metadata.coverage[kind]>=minimum,kind);
+ assert(data.metadata.recordings.available>=10);
+ assert(data.metadata.recordings.available<=data.metadata.recordings.published);
  for(const r of data.records){
   assert(!r.url.includes('private'));
   if(r.category==='Lecture recordings'){
