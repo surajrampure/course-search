@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {loadCourseConfig,validateConfigURL} from '../public/course-config.mjs';
 import {createQueryProcessor} from '../public/query.mjs';
 test('course configuration accepts course sites and checks data origins',async()=>{
- const page='https://surajrampure.github.io/course-search/v1/index.html?config=https://math124.org/assets/course-search/config.json';
+ const page='https://rampure.org/course-search/v1/index.html?config=https://math124.org/assets/course-search/config.json';
  const fetcher=async()=>({ok:true,json:async()=>({courseName:'Math 124',categories:['Lectures','Notes','Homeworks','Labs'],dataBase:'./data/'})});
  const config=await loadCourseConfig(page,fetcher);
  assert.equal(config.dataBase,'https://math124.org/assets/course-search/data/');

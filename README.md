@@ -2,7 +2,7 @@
 
 One search interface, modal, ranking engine, and pinned local embedding model for Math 124 and EECS 245. Each course owns its configuration, released-material importer, transcripts, index, and vectors. Search runs on the student's device.
 
-The shared deployment target is `https://surajrampure.github.io/course-search/v1/`. Both sites load its modal script and styles, and open the same app with `?embedded=1&config=<course configuration URL>`. A deployment here updates both interfaces without rebuilding either course website. Changes that break the configuration, index schema, or embedding model need a new major directory, such as `/v2/`; retain `/v1/` until both courses migrate. Built app and worker filenames include content hashes to keep releases consistent; browsers may retain the entry page briefly under the host's normal cache policy.
+The shared deployment target is `https://rampure.org/course-search/v1/`. Both sites load its modal script and styles, and open the same app with `?embedded=1&config=<course configuration URL>`. A deployment here updates both interfaces without rebuilding either course website. Changes that break the configuration, index schema, or embedding model need a new major directory, such as `/v2/`; retain `/v1/` until both courses migrate. Built app and worker filenames include content hashes to keep releases consistent; browsers may retain the entry page briefly under the host's normal cache policy.
 
 ## Build and verify
 
