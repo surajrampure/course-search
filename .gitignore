@@ -1,0 +1,8 @@
+node_modules/
+dist/
+_site/
+search-index.json
+public/data/
+public/worker.js
+public/vendor/onnx/
+.DS_Store

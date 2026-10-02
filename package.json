@@ -1,0 +1,23 @@
+{
+  "name": "course-smart-search",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "build": "node scripts/build.mjs",
+    "embed": "node scripts/prepare_index.mjs && node scripts/embed.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "3.8.1",
+    "esbuild": "0.25.10"
+  },
+  "overrides": {
+    "sharp": "0.35.4"
+  },
+  "devDependencies": {
+    "linkedom": "0.18.12"
+  }
+}
