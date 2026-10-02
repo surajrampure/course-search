@@ -1,5 +1,9 @@
 (() => {
  const trigger=document.querySelector('.smart-search-trigger');if(!trigger)return;
+ const platform=navigator.userAgentData?.platform || navigator.platform || navigator.userAgent;
+ const modifier=/Mac/i.test(platform)?'⌘':'Ctrl';
+ const shortcut=trigger.querySelector('kbd');if(shortcut)shortcut.textContent=modifier+' F';
+ trigger.setAttribute('aria-keyshortcuts',modifier==='⌘'?'Meta+F':'Control+F');
  const header=document.querySelector('#main-header');const mobileHeader=document.querySelector('.site-header');const menu=document.querySelector('#menu-button');
  const mobile=window.matchMedia('(max-width:799px)');
  function placeTrigger(){if(mobile.matches&&mobileHeader&&menu)mobileHeader.insertBefore(trigger,menu);else header?.prepend(trigger);}

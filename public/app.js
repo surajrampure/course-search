@@ -6,12 +6,16 @@ const course = await loadCourseConfig().catch(error => {
  throw error;
 });
 const activeCategories = course.categories;
+const categoryLabel = category => course.categoryLabels?.[category] || category;
 const recordingPreviews = course.recordingPreviews || {};
 document.title = 'Search · ' + course.courseName;
 document.querySelector('.brand').lastChild.textContent = ' ' + course.courseName;
 document.querySelector('header a').href = course.websiteURL;
 document.querySelector('label[for=search]').textContent = 'Search ' + course.courseName + ' course materials';
-for (const button of document.querySelectorAll('[data-category]')) if (!activeCategories.includes(button.dataset.category)) button.remove();
+for (const button of document.querySelectorAll('[data-category]')) {
+ if (!activeCategories.includes(button.dataset.category)) button.remove();
+ else button.textContent=categoryLabel(button.dataset.category);
+}
 const footerLinks = document.querySelector('.index-coverage-links');
 footerLinks.replaceChildren();
 for (const item of course.footerLinks || []) { footerLinks.append(' • '); const link = document.createElement('a'); link.href=item.url; link.textContent=item.label; link.target='_blank'; link.rel='noreferrer'; footerLinks.append(link); }
@@ -76,7 +80,7 @@ function render(){
   const section=document.createElement('section');section.className='group';section.dataset.category=category;
   const head=document.createElement('div');head.className='group-head';
   const icon=document.createElement('span');icon.className='group-icon';icon.textContent=icons[i];
-  const h2=document.createElement('h2');h2.textContent=category;
+  const h2=document.createElement('h2');h2.textContent=categoryLabel(category);
   const count=document.createElement('span');count.className='group-count';count.textContent=matches.length;
   head.append(icon,h2,count);section.append(head);
   const cards=document.createElement('div');cards.className='cards';
@@ -123,7 +127,7 @@ function render(){
     const label=document.createElement('span');label.className='recording-label';label.textContent=documentLabel(r);
     const preview=document.createElement('span');preview.className='card-excerpt';const previewLocations=(r.recording||r.pdf).locations;highlight(preview,excerpt(previewLocations.reduce((best,l)=>l.score>best.score?l:best).text,displayQuery),displayQuery);
     const countLabel=(count,singular)=>`${count} ${singular}${count===1?'':'s'}`;
-    const counts=[r.recording&&countLabel(r.recording.locations.length,'moment'),r.pdf&&countLabel(r.pdf.locations.length,'PDF page')].filter(Boolean);
+    const counts=[r.recording&&countLabel(r.recording.locations.length,'moment'),r.pdf&&countLabel(r.pdf.locations.length,course.lecturePDFPageLabel || 'PDF page')].filter(Boolean);
     const prompt=document.createElement('span');prompt.className='recording-prompt';prompt.textContent=counts.join(' · ')+' · Show matches';
     toggle.append(thumbnail,label,preview,prompt);
     const content=document.createElement('div');content.className='recording-content';
@@ -131,7 +135,7 @@ function render(){
      if(!source)continue;
      const sourceBlock=document.createElement('section');sourceBlock.className='lecture-source';
      const open=document.createElement('a');open.className='open-recording';open.href=source.url;open.target='_blank';open.rel='noreferrer';open.textContent=label+' ↗';
-     const sourceLocations=document.createElement('div');sourceLocations.className='locations';sourceLocations.setAttribute('aria-label',source.category==='Lecture recordings'?'Matching recording timestamps':'Matching PDF pages');
+     const sourceLocations=document.createElement('div');sourceLocations.className='locations';sourceLocations.setAttribute('aria-label',source.category==='Lecture recordings'?'Matching recording timestamps':(course.lecturePDFPageLabel ? 'Matching '+course.lecturePDFPageLabel+'s' : 'Matching PDF pages'));
      for(const link of [...locations.children])if(source.locations.some(location=>location.url===link.href||location.url===link.getAttribute('href')))sourceLocations.append(link);
      sourceBlock.append(open,sourceLocations);content.append(sourceBlock);
     }
@@ -146,7 +150,7 @@ function render(){
   if(matches.length>3){
    const more=document.createElement('button');more.type='button';more.className='show-more';
    more.textContent=expandedCategories.has(category)?'Show less':`Show more (${matches.length-3})`;
-   more.setAttribute('aria-label',`${more.textContent} ${category.toLowerCase()}`);
+   more.setAttribute('aria-label',`${more.textContent} ${categoryLabel(category).toLowerCase()}`);
    more.setAttribute('aria-expanded',String(expandedCategories.has(category)));
    more.addEventListener('click',()=>{expandedCategories.has(category)?expandedCategories.delete(category):expandedCategories.add(category);render();});
    section.append(more);
@@ -160,7 +164,7 @@ function display(results,processed,query){
  correction.hidden=!processed.corrections.length;
  if(processed.corrections.length)correction.textContent=`Showing results for “${normalizeQuery(processed.corrected)}”.`;
  allResults=combineLectureResults(filterCategories(results,selected));
- document.querySelector('#summary').textContent=`${allResults.length} documents · ${allResults.reduce((sum,r)=>sum+r.locations.length,0)} matching locations for “${query}”`;
+ document.querySelector('#summary').textContent=`${allResults.length} document${allResults.length===1?'':'s'} · ${allResults.reduce((sum,r)=>sum+r.locations.length,0)} matching locations for “${query}”`;
  document.querySelector('#timing').textContent='';document.querySelector('#results').setAttribute('aria-busy','false');
  document.querySelector('#empty').hidden=!!allResults.length;
  document.querySelector('#empty h2').textContent=selected.size?'No matches yet.':'Select a category to search.';
@@ -194,6 +198,6 @@ document.querySelector('#search-form').addEventListener('submit',e=>{e.preventDe
 document.addEventListener('keydown',e=>{if(e.key==='/'&&e.target!==input){e.preventDefault();input.focus();}});
 try{
  const response=await fetch(new URL('index.json',course.dataBase));if(!response.ok)throw new Error();const data=await response.json();processQuery=createQueryProcessor(data.records, {shorthand:course.queryShorthand || {}});
- document.querySelector('#index-coverage').textContent=indexedCoverage(data.records);
+ document.querySelector('#index-coverage').textContent=indexedCoverage(data.records,course);
  if(!timer)run();
 }catch{document.querySelector('#results').hidden=false;document.querySelector('#summary').textContent='Search is unavailable. Refresh to try again.';}

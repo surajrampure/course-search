@@ -135,7 +135,7 @@ export function mergeResults(keyword,semantic){
   return groupDocuments([...hits.values()].sort((a,b)=>b.score-a.score||Number(a.id)-Number(b.id)));
 }
 
-export function indexedCoverage(records){
+export function indexedCoverage(records,course={}){
  const titles=category=>[...new Set(records.filter(r=>r.category===category).map(r=>r.title))];
  const ranges=values=>{
   const numbers=[...new Set(values)].sort((a,b)=>a-b),parts=[];
@@ -148,6 +148,6 @@ export function indexedCoverage(records){
  };
  const numbered=category=>ranges(titles(category).map(t=>Number(t.match(/^(?:Lecture|Homework|Lab) (\d+)/)?.[1])).filter(Boolean));
  const recordings=numbered('Lecture recordings'),pdfs=numbered('Lecture PDFs');
- const lectures=recordings===pdfs?`Lectures: ${pdfs}`:`Lecture recordings: ${recordings} • Lecture PDFs: ${pdfs}`;
+ const lectures=recordings===pdfs&&!course.lecturePDFCategoryLabel?`Lectures: ${pdfs}`:`Lecture recordings: ${recordings} • ${course.lecturePDFCategoryLabel || 'Lecture PDFs'}: ${pdfs}`;
  return `${lectures} • Homeworks: ${numbered('Homeworks')} • Labs: ${numbered('Labs')}`;
 }

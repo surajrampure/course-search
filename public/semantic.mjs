@@ -7,11 +7,11 @@ export function semanticSearch(records,vectors,query,embedding){
  if(/dot product|inner product|scalar product|\\cdot|[uv]\s*[·•]\s*[uv]|cosine similarity/.test(q))concepts.push('dot product','inner product');
  if(/closest.*(?:line|plane|vector)|nearest.*(?:line|plane|vector)|distance.*(?:line|plane)|projection/.test(q))concepts.push('projection');
  const hits=[];
- const requested = /\b(homework|hw|lab|lecture|lec|note)\s*0*(\d+(?:\.\d+)?)\b/i.exec(q);
+ const requested = /\b(homework|hw|lab|lecture|lec|note|practice midterm)\s*0*(\d+(?:\.\d+)?)\b/i.exec(q);
  for(let i=0;i<records.length;i++){
   const r=records[i];let cosine=0;for(let j=0;j<384;j++)cosine+=embedding[j]*vectors[i*384+j];
   if(requested){
-   const names={homework:'Homework',hw:'Homework',lab:'Lab',lecture:'Lecture',lec:'Lecture',note:''};
+   const names={homework:'Homework',hw:'Homework',lab:'Lab',lecture:'Lecture',lec:'Lecture',note:'','practice midterm':'Practice Midterm'};
    const prefix=names[requested[1].toLowerCase()];
    const pattern=prefix?new RegExp('^'+prefix+' '+Number(requested[2])+'(?:\\D|$)'):new RegExp('^'+requested[2].replaceAll('.','\\.')+'(?:\\D|$)');
    if(!pattern.test(r.title))continue;

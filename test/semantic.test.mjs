@@ -28,7 +28,7 @@ test('the local model retrieves a passage by meaning',async()=>{
 test('Math 124 real sources preserve coverage, links, timestamps, and topic matches',{skip:!process.env.MATH124_DATA},async()=>{
  const {data,search}=await corpus(process.env.MATH124_DATA);
  // Keep the initial corpus as a floor while allowing later public releases.
- for(const [kind,minimum] of Object.entries({lectures:10,notes:14,homeworks:4,labs:5}))assert(data.metadata.coverage[kind]>=minimum,kind);
+ for(const [kind,minimum] of Object.entries({lectures:10,notes:14,homeworks:4,labs:5,exams:1}))assert(data.metadata.coverage[kind]>=minimum,kind);
  assert(data.metadata.recordings.available>=10);
  assert(data.metadata.recordings.available<=data.metadata.recordings.published);
  for(const r of data.records){
@@ -47,6 +47,9 @@ test('Math 124 real sources preserve coverage, links, timestamps, and topic matc
  assert(projection.some(r=>r.url.includes('/02-07/')));
  assert.deepEqual(await search('perpendicular'),await search('orthogonal'));
  assert.deepEqual(await search('porjection'),await search('projection'));
+ const exam=await search('practice midterm 1');assert(exam.length);assert(exam.every(r=>r.category==='Past exams'&&r.title==='Practice Midterm 1'));
+ assert.equal(new Set(data.records.filter(r=>r.title==='Practice Midterm 1').map(r=>r.url)).size,7);
+ assert((await search('projection')).some(r=>r.title==='Practice Midterm 1'));
  const hw=await search('hw 4');assert(hw.length);assert(hw.every(r=>r.title.startsWith('Homework 4:')));
  assert.equal((await search('purple flying giraffes')).length,0);
 });
