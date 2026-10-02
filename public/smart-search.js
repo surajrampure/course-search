@@ -9,7 +9,9 @@
  function placeTrigger(){if(mobile.matches&&mobileHeader&&menu)mobileHeader.insertBefore(trigger,menu);else header?.prepend(trigger);}
  placeTrigger();mobile.addEventListener('change',placeTrigger);
  const modal=document.createElement('dialog');modal.className='smart-search-modal';modal.setAttribute('aria-label','Smart Search');
- const close=document.createElement('button');close.type='button';close.className='smart-search-close';close.textContent='×';close.setAttribute('aria-label','Close Smart Search');
+ const close=document.createElement('button');close.type='button';close.className='smart-search-close';close.setAttribute('aria-label','Close Smart Search');
+ const closeIcon=document.createElementNS('http://www.w3.org/2000/svg','svg');closeIcon.setAttribute('viewBox','0 0 24 24');closeIcon.setAttribute('aria-hidden','true');closeIcon.setAttribute('focusable','false');
+ const closePath=document.createElementNS('http://www.w3.org/2000/svg','path');closePath.setAttribute('d','M6 6l12 12M18 6L6 18');closePath.setAttribute('fill','none');closePath.setAttribute('stroke','currentColor');closePath.setAttribute('stroke-width','2');closePath.setAttribute('stroke-linecap','round');closeIcon.append(closePath);close.append(closeIcon);
  const frame=document.createElement('iframe');frame.title=trigger.dataset.searchTitle || 'Search course materials';frame.className='smart-search-frame';
  modal.append(close,frame);document.body.append(modal);
  let returnFocus;
