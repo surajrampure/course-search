@@ -1,6 +1,6 @@
 import {tokens,normalizeQuery,normalizeText,createQueryProcessor} from './query.mjs';
 export {tokens,normalizeQuery,createQueryProcessor};
-export const categories=['Lecture recordings','Lecture PDFs','Notes','Homeworks','Labs','Past exams'];
+export const categories=['Lecture recordings','Lecture PDFs','Notes','Homeworks','Labs','Past exams','Other videos'];
 export const resultCategories=['Lectures','Notes','Homeworks','Labs','Past exams'];
 // Combine only matching, enabled lecture sources. Search scores stay unchanged.
 export function combineLectureResults(documents){

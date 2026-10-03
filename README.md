@@ -34,6 +34,8 @@ Store this in each course's `assets/course-search/config.json`:
 
 EECS 245 additionally enables `Past exams`, preserves `absolute` as shorthand for `absolute loss`, and supplies cached recording thumbnails. New courses require adding their origin to `public/course-config.mjs` and the app's content security policy. Configuration and data must share an origin; the course host must allow cross-origin asset reads. Frame messages check both the exact origin and window. Lecture players are contacted only when someone opens a recording link.
 
+Courses may also enable `Other videos`. Each curated video is a title-only record with a direct watch URL; the category appears only when included in the course configuration.
+
 ## Course index build
 
 Course importers produce `search-index.json` with `{records, metadata}`. Records use the existing categories `Notes`, `Homeworks`, `Labs`, `Past exams`, `Lecture PDFs`, and `Lecture recordings`. They carry `id`, `title`, `section`, `text`, `url`, `concepts`, and `releaseAt`; recording passages additionally carry authentic `start`, `end`, `recordingUrl`, `recordingId`, and `lectureDate`.

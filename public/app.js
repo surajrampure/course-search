@@ -58,7 +58,7 @@ function failSearch(message=''){
  document.querySelector('#timing').textContent='Search could not load. Refresh to try again.';
  if(!completedResults)document.querySelector('#summary').textContent='Search is unavailable.';
 }
-const icons=['▶','▤','▦','◫','▥'];
+const icons=['▶','▤','▦','◫','▥','▶'];
 const selected=new Set(activeCategories);
 function documentLabel(record){
  if(record.category==='Homeworks'||record.category==='Labs') return record.title.split(':')[0];

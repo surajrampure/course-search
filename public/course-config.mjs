@@ -11,7 +11,7 @@ export async function loadCourseConfig(pageURL = location.href, fetcher = fetch)
   const response = await fetcher(configURL.href);
   if (!response.ok) throw Error('Course configuration unavailable');
   const config = await response.json();
-  const available = ['Lectures', 'Notes', 'Homeworks', 'Labs', 'Past exams'];
+  const available = ['Lectures', 'Notes', 'Homeworks', 'Labs', 'Past exams', 'Other videos'];
   if (typeof config.courseName !== 'string' || !config.categories?.length || config.categories.some(c => !available.includes(c))) throw Error('Invalid course configuration');
   const dataBase = new URL(config.dataBase || './data/', configURL);
   if (dataBase.origin !== configURL.origin) throw Error('Course data must share the configuration origin');
