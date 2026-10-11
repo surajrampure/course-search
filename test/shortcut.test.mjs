@@ -25,3 +25,26 @@ for(const adapter of adapters){
   }
  });
 }
+
+test('page-find is opt-in and the second shortcut preserves native Find',async()=>{
+ const code=await readFile(adapters[0],'utf8');
+ for(const enabled of [false,true]){
+  const {document,window}=parseHTML(`<html><body><div id="main-header"><button class="smart-search-trigger" data-page-find="${enabled}" data-search-url="https://rampure.org/course-search/v1/?embedded=1"><kbd></kbd></button></div></body></html>`);
+  window.matchMedia=()=>({matches:false,addEventListener(){}});
+  vm.runInNewContext(code,{document,window,navigator:{platform:'MacIntel'},location:{href:'https://math124.org',origin:'https://math124.org'},URL,MutationObserver:class{observe(){}},getComputedStyle:()=>({fontFamily:'sans-serif'})});
+  const modal=document.querySelector('dialog'),frame=document.querySelector('iframe');
+  modal.showModal=()=>{modal.open=true;};modal.close=()=>{modal.open=false;modal.dispatchEvent(new window.Event('close'));};
+  const key=(props={})=>{const e=new window.Event('keydown',{cancelable:true});Object.assign(e,{key:'f',metaKey:true,...props});document.dispatchEvent(e);return e;};
+  assert.equal(key().defaultPrevented,true);assert.equal(modal.open,true);
+  assert.equal(new URL(frame.src).searchParams.get('page-find'),enabled?'1':null);
+  assert.equal(key({repeat:true}).defaultPrevented,true);assert.equal(modal.open,true);
+  assert.equal(key().defaultPrevented,!enabled);assert.equal(modal.open,!enabled);
+  document.querySelector('.smart-search-trigger').click();assert.equal(modal.open,true);
+  const message=(origin,source)=>{const e=new window.Event('message');Object.assign(e,{origin,source,data:{type:'course-search-page-find'}});window.dispatchEvent(e);};
+  message('https://untrusted.example',frame.contentWindow);assert.equal(modal.open,true);
+  message('https://rampure.org',{});assert.equal(modal.open,true);
+  message('https://rampure.org',frame.contentWindow);assert.equal(modal.open,!enabled);
+  document.querySelector('.smart-search-trigger').click();document.querySelector('.smart-search-close').click();assert.equal(modal.open,false);
+  assert.equal(document.body.classList.contains('smart-search-open'),false);
+ }
+});

@@ -26,13 +26,20 @@ const explanation=document.querySelector('.search-explanation');
 function renderExplanation(){if(window.renderMathInElement)window.renderMathInElement(explanation,{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false,trust:false});}
 renderExplanation();explanation.addEventListener('toggle',()=>{if(explanation.open)renderExplanation();});
 if(document.body.classList.contains('embedded')){
+ const pageFind=new URLSearchParams(location.search).get('page-find')==='1';
+ if(pageFind){
+  const hint=document.createElement('p');hint.className='page-find-hint';
+  const platform=navigator.userAgentData?.platform||navigator.platform||navigator.userAgent;
+  hint.textContent=`Press ${/Mac/i.test(platform)?'⌘F':'Ctrl+F'} again to find on this page. Esc closes Smart Search.`;
+  document.querySelector('#search-form').after(hint);
+ }
  window.addEventListener('message',event=>{
   if(event.origin!==course.parentOrigin||event.source!==parent)return;
   if(event.data?.type==='course-search-focus')input.focus();
   if(event.data?.type==='course-search-font'&&typeof event.data.fontFamily==='string')document.documentElement.style.setProperty('--course-font',event.data.fontFamily);
  });
  parent.postMessage({type:'course-search-font-request'},course.parentOrigin);
- document.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();parent.postMessage({type:'course-search-close'},course.parentOrigin);}if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='f'){event.preventDefault();input.focus();}});
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();parent.postMessage({type:'course-search-close'},course.parentOrigin);}if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='f'){if(event.repeat){event.preventDefault();return;}if(pageFind){parent.postMessage({type:'course-search-page-find'},course.parentOrigin);return;}event.preventDefault();input.focus();}});
 }
 
 let allResults=[],completedResults=null,timer,requestId=0,semanticReady=false,semanticFailed=false;

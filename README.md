@@ -53,3 +53,7 @@ Real-data checks can be enabled with `MATH124_DATA` and `EECS245_DATA`, each poi
 Math 124's initial snapshot contains lectures 1–10, worksheets 6–10, 14 published notes, homeworks 1–4, and labs 1–5. Lab 5 is a homework work session and links to the schedule. Caption passages come from the authenticated player's visible timestamped transcript; before/after-class chatter is trimmed using reviewed ranges. Transcript text may contain provider errors. Raw capture and credentials are not deployed.
 
 Search combines BM25-style keyword scores with semantic matches using reciprocal-rank fusion. Explicit requests such as `HW 4 problem 3`, `lecture 9 projection`, `lab 4 activity 2`, `note 2.7`, and `practice midterm 1 problem 3` constrain both retrieval paths before ranking. Requests without topic words open the indexed sections directly; missing resources return no results. Course-specific shorthand applies to the remaining topic.
+
+## Page Find beta
+
+Set `data-page-find="true"` on a course’s Smart Search trigger to opt in. The first Cmd/Ctrl+F opens Smart Search; the next closes it and leaves the real keyboard event uncancelled so the browser opens Find. Escape, the close button, and backdrop dismissal keep their existing behavior. The adapter forwards the opt-in to the embedded app with `page-find=1`; sites without the attribute keep their existing shortcut behavior. Deploy the shared app before enabling the course trigger.
