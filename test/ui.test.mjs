@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {parseHTML} from 'linkedom';
 import {buildSearch,resultCategories,indexedCoverage,combineLectureResults,filterCategories} from '../public/search.mjs';
 
-test('semantic UI waits, debounces, rejects stale results, and preserves recording controls and site font',async t=>{
+test('semantic UI waits, debounces, rejects stale results, and preserves recording controls and follows reading settings',async t=>{
  const {window,document}=parseHTML(await readFile(new URL('../public/index.html',import.meta.url),'utf8'));
  const base='https://leccap.engin.umich.edu/leccap/player/r/';
  const records=Array.from({length:4},(_,i)=>({id:String(i),category:'Lecture recordings',title:`Lecture ${i+1} · Synthetic`,section:'0:10–0:40',text:'Synthetic caption: absolute loss is minimized by a median.',url:base+`fixture${i}?start=5`,start:10,end:40,detail:'Leccap captions',concepts:[],lectureDate:`2026-09-0${i+1}`}));
@@ -79,10 +79,29 @@ test('semantic UI waits, debounces, rejects stale results, and preserves recordi
  input.value='squared loss';input.dispatchEvent(new window.Event('input'));input.value='';input.dispatchEvent(new window.Event('input'));
  t.mock.timers.tick(400);assert.equal(messages.length,count+2);assert(document.querySelector('#results').hidden);
  input.value='absoluet loss';submit();assert(group());assert.match(document.querySelector('.search-correction').textContent,/absolute loss/);
- const fontMessage=(origin,source,fontFamily)=>{const event=new window.Event('message');Object.assign(event,{origin,source,data:{type:'course-search-font',fontFamily}});window.dispatchEvent(event);};
- fontMessage(location.origin,parent,'Palatino, serif');assert.equal(document.documentElement.style.getPropertyValue('--course-font'),'Palatino, serif');
- fontMessage('https://untrusted.example',parent,'bad');fontMessage(location.origin,{},'bad');assert.equal(document.documentElement.style.getPropertyValue('--course-font'),'Palatino, serif');
- fontMessage(location.origin,parent,'system-ui, sans-serif');assert.equal(document.documentElement.style.getPropertyValue('--course-font'),'system-ui, sans-serif');
+ const readingMessage = (origin, source, settings) => {
+  const event = new window.Event('message');
+  Object.assign(event, {origin, source, data: {type: 'course-search-font', ...settings}});
+  window.dispatchEvent(event);
+ };
+ const root = document.documentElement;
+ const dark = {bg:'#221d18', ink:'#f1ece3', muted:'#d2c7b8', border:'#554a3d', hover:'#302922', accent:'#f3c969', selected:'#3a3324'};
+ const paper = {...dark, bg:'#f0eee6', ink:'#3d3929'};
+ readingMessage(location.origin, parent, {fontFamily:'Palatino, serif', appearance:'dark', colors:dark});
+ assert.equal(root.style.getPropertyValue('--course-font'), 'Palatino, serif');
+ assert.equal(root.dataset.readingAppearance, 'dark');
+ assert.equal(root.style.getPropertyValue('--reading-bg'), dark.bg);
+ readingMessage('https://untrusted.example', parent, {appearance:'paper', colors:paper});
+ readingMessage(location.origin, {}, {appearance:'paper', colors:paper});
+ readingMessage(location.origin, parent, {appearance:'paper', colors:{bg:paper.bg}});
+ assert.equal(root.dataset.readingAppearance, 'dark');
+ assert.equal(root.style.getPropertyValue('--reading-bg'), dark.bg);
+ readingMessage(location.origin, parent, {appearance:'paper', colors:paper});
+ assert.equal(root.dataset.readingAppearance, 'paper');
+ assert.equal(root.style.getPropertyValue('--reading-bg'), paper.bg);
+ readingMessage(location.origin, parent, {fontFamily:'system-ui, sans-serif'});
+ assert.equal(root.style.getPropertyValue('--course-font'), 'system-ui, sans-serif');
+ assert.equal(root.dataset.readingAppearance, 'paper');
  globalThis.testWorker.onmessage({data:{type:'error',message:'Model unavailable'}});
  input.value='squared loss';submit();assert.equal(messages.length,count+2);assert.match(document.querySelector('#timing').textContent,/Refresh to try again/);assert(group());
 });

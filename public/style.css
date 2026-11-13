@@ -53,3 +53,71 @@ body{font-family:var(--course-font);color:#5c5962;background:#fff;line-height:1.
 #search-form kbd{display:grid;place-items:center;flex-shrink:0;width:22px;height:24px;padding:0;line-height:1}#search-form kbd svg{display:block;width:12px;height:16px;stroke:currentColor;stroke-width:1.5;fill:none}
 
 .page-find-hint{font-size:13px;color:#5c5962;margin:8px 0 16px}
+
+/* The embedded app receives these colors from the course's reading settings. */
+html[data-reading-appearance="dark"] {
+  color-scheme: dark;
+}
+
+html[data-reading-appearance]:not([data-reading-appearance="light"]) {
+  --line: var(--reading-border);
+  --link: var(--reading-accent);
+
+  & body {
+    background: var(--reading-bg);
+    color: var(--reading-ink);
+  }
+
+  & :is(.brand, .group-head h2, .card h3 a, .note-title, .recording-label, input, .card-excerpt),
+  & #empty h2 {
+    color: var(--reading-ink);
+  }
+
+  & :is(.search-description, .page-find-hint, .search-correction, .results-bar, .results-bar > span,
+        .group-count, .passages, .passage small, .recording-prompt, .index-coverage, .search-explanation),
+  & #empty p,
+  & input::placeholder,
+  & .note-title::marker {
+    color: var(--reading-muted);
+  }
+
+  & :is(form, .card, .sort-controls, .filter[aria-pressed="false"]) {
+    background: var(--reading-bg);
+    border-color: var(--reading-border);
+  }
+
+  & :is(.group, .results-bar) {
+    border-color: var(--reading-border);
+  }
+
+  & :is(kbd, .recording-thumbnail, .locations a) {
+    background: var(--reading-hover);
+    border-color: var(--reading-border);
+  }
+
+  & :is(kbd, .sort-controls button, .filter[aria-pressed="false"]) {
+    color: var(--reading-muted);
+  }
+
+  & form svg {
+    stroke: var(--reading-muted);
+  }
+
+  & :is(form:focus-within, .card:hover, .locations a:hover, .filter:hover) {
+    border-color: var(--reading-accent);
+  }
+
+  & :is(.card h3 a:hover, .locations a, .passage > a, .open-note, .open-recording, .show-more, .search-explanation a) {
+    color: var(--reading-accent);
+  }
+
+  & :is(.filter[aria-pressed="true"], .sort-controls button[aria-pressed="true"], .card mark) {
+    background: var(--reading-selected);
+    color: var(--reading-ink);
+    border-color: var(--reading-border);
+  }
+
+  & :is(a, button, summary):focus-visible {
+    outline-color: var(--reading-accent);
+  }
+}

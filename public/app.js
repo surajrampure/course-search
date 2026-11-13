@@ -36,7 +36,15 @@ if(document.body.classList.contains('embedded')){
  window.addEventListener('message',event=>{
   if(event.origin!==course.parentOrigin||event.source!==parent)return;
   if(event.data?.type==='course-search-focus')input.focus();
-  if(event.data?.type==='course-search-font'&&typeof event.data.fontFamily==='string')document.documentElement.style.setProperty('--course-font',event.data.fontFamily);
+  if (event.data?.type !== 'course-search-font') return;
+  const {fontFamily, appearance, colors} = event.data;
+  const root = document.documentElement;
+  if (typeof fontFamily === 'string') root.style.setProperty('--course-font', fontFamily);
+  if (!['light', 'paper', 'dark'].includes(appearance)) return;
+  const readingColors = ['bg', 'ink', 'muted', 'border', 'hover', 'accent', 'selected'];
+  if (!readingColors.every(name => typeof colors?.[name] === 'string' && colors[name])) return;
+  for (const name of readingColors) root.style.setProperty(`--reading-${name}`, colors[name]);
+  root.dataset.readingAppearance = appearance;
  });
  parent.postMessage({type:'course-search-font-request'},course.parentOrigin);
  document.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();parent.postMessage({type:'course-search-close'},course.parentOrigin);}if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='f'){if(event.repeat){event.preventDefault();return;}if(pageFind){parent.postMessage({type:'course-search-page-find'},course.parentOrigin);return;}event.preventDefault();input.focus();}});

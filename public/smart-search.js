@@ -19,9 +19,24 @@
  const pageFind = trigger.dataset.pageFind === 'true';
  if(pageFind)appURL.searchParams.set('page-find','1');
  const appOrigin = appURL.origin;
- const syncFont=()=>frame.contentWindow?.postMessage({type:'course-search-font',fontFamily:getComputedStyle(document.body).fontFamily},appOrigin);
- const focusSearch=()=>{syncFont();frame.contentWindow?.postMessage({type:'course-search-focus'},appOrigin);};
- new MutationObserver(syncFont).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+ const root = document.documentElement;
+ const readingColors = ['bg', 'ink', 'muted', 'border', 'hover', 'accent', 'selected'];
+ function syncReadingSettings() {
+   if (!frame.src || !frame.contentWindow) return;
+   const styles = getComputedStyle(root);
+   const colors = Object.fromEntries(readingColors.map(name => [name, styles.getPropertyValue(`--reading-${name}`).trim()]));
+   frame.contentWindow.postMessage({
+     type: 'course-search-font',
+     fontFamily: getComputedStyle(document.body).fontFamily,
+     appearance: root.dataset.readingAppearance,
+     colors,
+   }, appOrigin);
+ }
+ const focusSearch=()=>{syncReadingSettings();frame.contentWindow?.postMessage({type:'course-search-focus'},appOrigin);};
+ new MutationObserver(syncReadingSettings).observe(root, {
+   attributes: true,
+   attributeFilter: ['class', 'data-reading-appearance'],
+ });
  function open(){if(!frame.src)frame.src=appURL.href;if(!modal.open){returnFocus=document.activeElement;modal.showModal();document.body.classList.add('smart-search-open');}focusSearch();}
  function dismiss(){if(modal.open)modal.close();}
  close.addEventListener('click',dismiss);trigger.addEventListener('click',open);
@@ -29,5 +44,5 @@
  modal.addEventListener('click',event=>{if(event.target===modal){const r=modal.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dismiss();}});
  modal.addEventListener('close',()=>{document.body.classList.remove('smart-search-open');returnFocus?.focus();});
  document.addEventListener('keydown',event=>{if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='f'){if(event.repeat){event.preventDefault();return;}if(pageFind&&modal.open){dismiss();return;}event.preventDefault();open();}});
- window.addEventListener('message',event=>{if(event.origin!==appOrigin||event.source!==frame.contentWindow)return;if(event.data?.type==='course-search-close'||(pageFind&&event.data?.type==='course-search-page-find'))dismiss();if(event.data?.type==='course-search-focus-parent')open();if(event.data?.type==='course-search-font-request')syncFont();});
+ window.addEventListener('message',event=>{if(event.origin!==appOrigin||event.source!==frame.contentWindow)return;if(event.data?.type==='course-search-close'||(pageFind&&event.data?.type==='course-search-page-find'))dismiss();if(event.data?.type==='course-search-focus-parent')open();if(event.data?.type==='course-search-font-request')syncReadingSettings();});
 })();
